@@ -201,8 +201,11 @@ class CoreNLPClient(RobustService):
         parseFromDelimitedString(doc, r.content)
         return doc
 
-    def tokensregex(self, text, pattern, filter=False):
-        return self.__regex('/tokensregex', text, pattern, filter)
+    def tokensregex(self, text, pattern, filter=False, to_words=False):
+        matches = self.__regex('/semgrex', text, pattern, filter)
+        if not to_words:
+            return matches
+        return self.semgrex_matches_to_indexed_words(matches)
 
     def semgrex(self, text, pattern, filter=False, unique=False, to_words=False):
         matches = self.__regex('/semgrex', text, pattern, filter, unique)
@@ -242,7 +245,7 @@ class CoreNLPClient(RobustService):
         :param matches: unprocessed matches from semgrex function
         :return: flat array of indexed words
         """
-        words = [dict(v, **dict([('sent', i)]))
+        words = [dict(v, **dict([('sentence', i)]))
                  for i, s in enumerate(matches['sentences'])
                  for k, v in s.items() if k != 'length']
         return words
