@@ -201,17 +201,17 @@ class CoreNLPClient(RobustService):
         parseFromDelimitedString(doc, r.content)
         return doc
 
-    def tokensregex(self, text, pattern, filter=False, flatten=False):
+    def tokensregex(self, text, pattern, filter=False, flatten=False, sent_index=None):
         matches = self.__regex('/semgrex', text, pattern, filter)
         if not flatten:
             return matches
-        return self.semgrex_matches_to_indexed_words(matches)
+        return self.semgrex_matches_to_indexed_words(matches, sent_index=sent_index)
 
-    def semgrex(self, text, pattern, filter=False, unique=False, flatten=False):
+    def semgrex(self, text, pattern, filter=False, unique=False, flatten=False, sent_index=None):
         matches = self.__regex('/semgrex', text, pattern, filter, unique)
         if not flatten:
             return matches
-        return self.semgrex_matches_to_indexed_words(matches)
+        return self.semgrex_matches_to_indexed_words(matches, sent_index=sent_index)
 
     def tregrex(self, text, pattern, filter=False):
         return self.__regex('/tregex', text, pattern, filter)
@@ -230,7 +230,7 @@ class CoreNLPClient(RobustService):
                 'pattern': pattern,
                 'filter': filter,
                 'unique': unique
-            }, data=text)
+            }, data=text.encode('utf-8'))
         output = r.text
         try:
             output = json.loads(r.text)
@@ -239,15 +239,21 @@ class CoreNLPClient(RobustService):
         return output
 
     @staticmethod
-    def semgrex_matches_to_indexed_words(matches):
+    def semgrex_matches_to_indexed_words(matches, sent_index=None):
         """Transforms semgrex matches to indexed words.
 
         :param matches: unprocessed matches from semgrex function
+        :param sent_index: filter matches from specific sentence
         :return: flat array of indexed words
         """
-        words = [dict(v, **dict([('sent_index', i)]))
-                 for i, s in enumerate(matches['sentences'])
-                 for k, v in s.items() if k != 'length']
+        if sent_index:
+            words = [dict(v, **dict([('sent_index', i)]))
+                     for i, s in enumerate(matches['sentences'])
+                     for k, v in s.items() if k != 'length' and i == sent_index]
+        else:
+            words = [dict(v, **dict([('sent_index', i)]))
+                     for i, s in enumerate(matches['sentences'])
+                     for k, v in s.items() if k != 'length']
         return words
 
 __all__ = ["CoreNLPClient", "AnnotationException", "TimeoutException", "to_text"]
