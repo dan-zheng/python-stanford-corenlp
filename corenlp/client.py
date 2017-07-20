@@ -116,16 +116,16 @@ class CoreNLPClient(RobustService):
     DEFAULT_ANNOTATORS = "tokenize ssplit lemma pos ner depparse".split()
     DEFAULT_PROPERTIES = {}
 
-    def __init__(self, start_server=True, endpoint="http://localhost:9000", timeout=5000, annotators=DEFAULT_ANNOTATORS, properties=DEFAULT_PROPERTIES):
+    def __init__(self, start_server=True, endpoint="http://localhost:9000", timeout=5000, annotators=DEFAULT_ANNOTATORS, properties=DEFAULT_PROPERTIES, quiet=True):
         if start_server:
             host, port = urlparse(endpoint).netloc.split(":")
             assert host == "localhost", "If starting a server, endpoint must be localhost"
-
             assert os.getenv("JAVANLP_HOME") is not None, "Please define $JAVANLP_HOME where your CoreNLP Java checkout is"
-            start_cmd = "{javanlp}/javanlp.sh edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port {port} -timeout {timeout}".format(
+            start_cmd = "{javanlp}/javanlp.sh edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port {port} -timeout {timeout} {quiet}".format(
                 javanlp=os.getenv("JAVANLP_HOME"),
                 port=port,
-                timeout=timeout)
+                timeout=timeout,
+                quiet='2&>1 >/dev/null' if quiet else '')
             stop_cmd = None
         else:
             start_cmd = stop_cmd = None
